@@ -18,7 +18,7 @@ def get_database_connection():
     return pymysql.connect(
         host='localhost',
         user='root',
-        password='admin123',
+        password='root',
         database='ecommerce',
         cursorclass=pymysql.cursors.DictCursor
     )
@@ -295,11 +295,13 @@ def comparer(html_content):
                     "Href": href1
                 })
     unique_data = {}
+    cnt=0
     for item in data:
         seller = item["Seller"]
         if seller not in unique_data:
-            unique_data[seller] = item
+            unique_data[cnt] = item
             print(unique_data)
+            cnt+=1
 
     else:
         print("Buying options div not found in the HTML content.")
@@ -317,15 +319,6 @@ import urllib.parse
 import requests
 import threading
 import time
-
-def get_database_connection():
-    return pymysql.connect(
-        host='localhost',
-        user='root',
-        password='admin123',
-        database='ecommerce',
-        cursorclass=pymysql.cursors.DictCursor
-    )
 
 def get_lowest_price(html_content, email, product_id, product_url, image_url):
     data = []

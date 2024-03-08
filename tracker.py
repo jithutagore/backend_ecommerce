@@ -66,7 +66,7 @@ def insert_price(product_id, price):
     connection = mysql.connector.connect(
         host="localhost",
         user="root",
-        password="admin123",
+        password="root",
         database="ecommerce"
     )
     cursor = connection.cursor()

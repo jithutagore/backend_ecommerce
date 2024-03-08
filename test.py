@@ -9,7 +9,7 @@ def get_database_connection():
     return pymysql.connect(
         host='localhost',
         user='root',
-        password='admin123',
+        password='root',
         database='ecommerce',
         cursorclass=pymysql.cursors.DictCursor
     )
