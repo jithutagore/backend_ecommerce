@@ -140,7 +140,7 @@ def run_insert_tracker_data():
         insert_tracker_data(conn)
         
         # Sleep for 15 minutes
-        time.sleep(5*60)  # 5 minutes in seconds
+        time.sleep(5)  # 5 minutes in seconds
 
 
 
@@ -295,9 +295,15 @@ def comparer(html_content,url):
         if src and src.startswith("https://encrypted"):
             img_url=src
             break 
-    description = [li.span.text.strip() for li in soup.find_all('li', class_='KgL16d')]
-    if len(description)==0:
-        description = [soup.find('span', class_='sh-ds__trunc-txt').text.strip()]
+    
+
+    try:
+        description = [li.span.text.strip() for li in soup.find_all('li', class_='KgL16d')]
+    
+        if len(description)==0:
+            description = [soup.find('span', class_='sh-ds__trunc-txt').text.strip()]
+    except Exception as e:
+        print(e)
     title = soup.find('span', class_='BvQan').text.strip()
 
     if buying_options_div:
