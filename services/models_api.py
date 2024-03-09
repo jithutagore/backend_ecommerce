@@ -14,6 +14,7 @@ class URLInput(BaseModel):
     url: str
 
 
+    # CartItem model
 class CartItem(BaseModel):
     email: str
     product_id: str
@@ -21,4 +22,5 @@ class CartItem(BaseModel):
     image_url: str
     product_description: str
     price: str
+    product_title: str
     

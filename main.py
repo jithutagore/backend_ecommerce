@@ -123,8 +123,8 @@ async def user_login(login: Login):
 @app.post("/insert_cart_item/")
 async def add_to_cart(item: CartItem):
     try:
-        query = "INSERT INTO cart (email, product_id, product_url, image_url, product_description, price) VALUES (%s, %s, %s, %s, %s, %s)"
-        values = (item.email, item.product_id, item.product_url, item.image_url, item.product_description, item.price)
+        query = "INSERT INTO cart (email, product_id, product_url, image_url, product_description, price, product_title) VALUES (%s, %s, %s, %s, %s, %s, %s)"
+        values = (item.email, item.product_id, item.product_url, item.image_url, item.product_description, item.price, item.product_title)
         cursor.execute(query, values)
         conn.commit()
         return {"message": "Item added to cart successfully"}
@@ -147,7 +147,7 @@ async def delete_cart(product_id: str):
 async def get_product_info(url: str):
     html_content = google_search_morzilla(url)
     if html_content:
-        product_info = comparer(html_content)
+        product_info = comparer(html_content,url)
         return product_info
     else:
         return {"error": "Failed to fetch HTML content."}

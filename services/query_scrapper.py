@@ -201,7 +201,7 @@ def google_search_morzilla(url):
     else:
         return None
 
-def comparer(html_content):
+def comparer(html_content,url):
     data = []
     soup = BeautifulSoup(html_content, "html.parser")
     buying_options_div = soup.find("div", class_="sh-pov__grid")
@@ -243,7 +243,8 @@ def comparer(html_content):
         "img_url": img_url,
         "description": description,
         "title": title,
-        "price_comparison": unique_data
+        "price_comparison": unique_data,
+        "product_url":url
     }
 
 
