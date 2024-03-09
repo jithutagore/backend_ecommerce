@@ -98,6 +98,24 @@ async def search(query: str):
     except ConnectionResetError as e:
         return {"error": "Connection reset by peer"}  # Handle connection reset error gracefully
 
+@app.get("/search_with_filters/")
+async def search_with_filters(query: str, minPrice: float = None, maxPrice: float = None):
+    try:
+        html_content = google_search(query)
+        results = html_parser(html_content)
+        
+        # Filter results based on price range if minPrice and/or maxPrice are provided
+        if minPrice is not None:
+            results = [r for r in results if float(r["original_price"].replace("₹", "").replace(",", "")) >= minPrice]
+        if maxPrice is not None:
+            results = [r for r in results if float(r["original_price"].replace("₹", "").replace(",", "")) <= maxPrice]
+        
+        return {"results": results}
+    except HTTPException as e:
+        return {"error": str(e.detail)}
+    except ConnectionResetError as e:
+        return {"error": "Connection reset by peer"}  # Handle connection reset error gracefully
+
 
 @app.post("/login/")
 async def user_login(login: Login):
@@ -207,8 +225,8 @@ async def get_lowest_price(product_id: str):
         # Create a cursor
         cursor = conn.cursor()
 
-        # Execute SQL query to retrieve the lowest price for the given product ID
-        sql = "SELECT MIN(price) AS lowest_price FROM tracker WHERE product_id = %s"
+        # Execute SQL query to retrieve the lowest price and seller URL for the given product ID
+        sql = "SELECT MIN(price) AS lowest_price, seller_url FROM tracker WHERE product_id = %s"
         cursor.execute(sql, (product_id,))
         lowest_price_data = cursor.fetchone()
 
@@ -223,7 +241,6 @@ async def get_lowest_price(product_id: str):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
 
 # Run the application with uvicorn
 if __name__ == "__main__":
