@@ -9,6 +9,23 @@ from typing import List
 import threading
 import time
 
+from langchain.utilities import SQLDatabase
+from langchain_experimental.sql import SQLDatabaseChain
+from langchain_google_genai import ChatGoogleGenerativeAI
+llm = ChatGoogleGenerativeAI(model="gemini-pro",google_api_key="AIzaSyA4wdPBdAqI6P0N4b6LOx44PtFCp3mXGlI")
+db_user = "root"
+db_password = "admin123"
+db_host = "localhost"
+db_name = "ecommerce"
+
+db = SQLDatabase.from_uri(f"mysql+pymysql://{db_user}:{db_password}@{db_host}/{db_name}",sample_rows_in_table_info=3)
+db_table_info=db.table_info
+
+intro="generate query for the promt :"
+question="{promt}"
+my_mail_id=" my mail id is : {maid_id}"
+my_db_schema=f"my db schema is :{db_table_info}"
+
 # Your JWT secret key
 SECRET_KEY = "your_secret_key"
 ALGORITHM = "HS256"
@@ -323,6 +340,28 @@ async def delete_warranty_data(product_id: str):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+def run_query(query):
+    return db.run(query)
+    
+@app.post("/chatbot")
+async def get_answer(maiid: str, question: str):
+    # Your logic to fetch response based on MAIID and question
+    # For this example, I'll just return a dummy response
+    intro=f"generate query for the promt :{question}"
+    my_mail_id=f" my mail id is : {maiid}"
+    my_db_schema=f"my db schema is :{db_table_info}"
+    prompt=intro+"\n"+my_mail_id+"\n"+my_db_schema
+
+    
+    result = llm.invoke(prompt).content
+    query=result.replace("```sql", "").replace("```", "")
+    data_db=run_query(query=query)
+    output=f"generate a new  response  with the data that contains my query and response,where  my query is : {query} and my response is {data_db}"
+    final_output=llm.invoke(output).content
+    response=str(final_output)
+    unwanted="""**Query:**\n\n```sql```\n\n**Response:**\n\n```\n\n```\n\n"""
+    response=response.replace(query,"").replace(data_db,"").replace(unwanted,"")
+    return {"answer": response}
 
 # Run the application with uvicorn
 if __name__ == "__main__":
