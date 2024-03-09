@@ -313,12 +313,14 @@ def comparer(html_content,url):
                     "Href": href1
                 })
     unique_data = {}
+    final_data={}
     cnt=0
     for item in data:
         seller = item["Seller"]
         if seller not in unique_data:
-            unique_data[cnt] = item
-            print(unique_data)
+            unique_data[seller] = item
+            final_data[cnt]=item
+            # print(unique_data)
             cnt+=1
 
     else:
@@ -327,6 +329,6 @@ def comparer(html_content,url):
         "img_url": img_url,
         "description": description,
         "title": title,
-        "price_comparison": unique_data,
+        "price_comparison": final_data,
         "product_url":url
     }
