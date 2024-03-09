@@ -195,6 +195,29 @@ async def get_tracker_data(product_id: str):
 async def extract_reviews(url: str):
     reviews = extract_reviews_from_url(url)
     return reviews or []
+@app.get("/lowest_price/")
+async def get_lowest_price(product_id: str):
+    try:
+        # Create a cursor
+        cursor = conn.cursor()
+
+        # Execute SQL query to retrieve the lowest price for the given product ID
+        sql = "SELECT MIN(price) AS lowest_price FROM tracker WHERE product_id = %s"
+        cursor.execute(sql, (product_id,))
+        lowest_price_data = cursor.fetchone()
+
+        # Close cursor
+        cursor.close()
+
+        # Check if lowest price data is empty
+        if not lowest_price_data or not lowest_price_data["lowest_price"]:
+            raise HTTPException(status_code=404, detail="Lowest price data not found")
+
+        return lowest_price_data
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 # Run the application with uvicorn
 if __name__ == "__main__":
