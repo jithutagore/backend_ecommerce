@@ -178,7 +178,7 @@ def run_insert_tracker_data():
         insert_tracker_data(conn)
         
         # Sleep for 15 minutes
-        time.sleep(5)  # 5 minutes in seconds
+        time.sleep(5*60)  # 5 minutes in seconds
 
 
 
