@@ -278,9 +278,10 @@ def fetch_warranty_data(conn):
     return warranty_data
 
 # Function to calculate days left for warranty
-def calculate_days_left(timestamp):
+def calculate_days_left(timestamp,numb_days):
     days_after_bought = (datetime.now() - timestamp).days
-    days_left_for_warranty = 365 - days_after_bought
+
+    days_left_for_warranty = numb_days - days_after_bought
     return days_left_for_warranty
 
 # FastAPI endpoint to fetch warranty data with expiry time calculation
@@ -293,7 +294,8 @@ async def get_warranty_data_with_expiry():
         # Calculate expiry time for each warranty
         for warranty in warranty_data:
             timestamp = warranty["timestamp"]
-            days_left_for_warranty = calculate_days_left(timestamp)
+            numb_days=warranty["warranty_time"]
+            days_left_for_warranty = calculate_days_left(timestamp,numb_days)
             warranty["expiry_time"] = str(days_left_for_warranty) + " days left"
 
         return warranty_data
@@ -362,6 +364,28 @@ async def get_answer(maiid: str, question: str):
     unwanted="""**Query:**\n\n```sql```\n\n**Response:**\n\n```\n\n```\n\n"""
     response=response.replace(query,"").replace(data_db,"").replace(unwanted,"")
     return {"answer": response}
+
+
+@app.put("/warranty_edit")
+async def edit_warranty_time(product_id: str, warranty_time: int):
+    try:
+        # Connect to the database
+        # Create a cursor
+        cursor = conn.cursor()
+
+        # Update the warranty_time for the specified product_id
+        sql = "UPDATE warranty SET warranty_time = %s WHERE product_id = %s"
+        cursor.execute(sql, (warranty_time, product_id))
+        conn.commit()
+        # Close cursor
+        cursor.close()
+
+        return {"message": "Warranty time updated successfully"}
+
+    except pymysql.Error as e:
+        # Handle pymysql errors
+        error_message = f"Database error: {e}"
+        raise HTTPException(status_code=500, detail=error_message)
 
 # Run the application with uvicorn
 if __name__ == "__main__":

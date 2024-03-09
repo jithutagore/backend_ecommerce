@@ -111,12 +111,13 @@ def insert_waranty_data(conn, product_id):
         # Get lowest price data
         lowest_price_data = get_lowest_price_tracker(html_content, email, product_id, product_url, image_url)
 
-        # Insert data into the tracker table
+      # Insert data into the warranty table
         insert_sql = """
-            INSERT INTO warranty (email, product_id, product_url, image_url, product_description, title, price, seller, seller_url)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO warranty (email, product_id, product_url, image_url, product_description, title, price, seller, seller_url, warranty_time)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
-        
+
+        # Execute the insertion query
         cursor.execute(insert_sql, (
             lowest_price_data["email"],
             lowest_price_data["product_id"],
@@ -126,7 +127,8 @@ def insert_waranty_data(conn, product_id):
             lowest_price_data["title"],
             lowest_price_data["lowest_price"],
             lowest_price_data["lowest_price_seller"],
-            lowest_price_data["lowest_price_seller_url"]
+            lowest_price_data["lowest_price_seller_url"],
+            365  # Integer value for warranty_time column
         ))
         conn.commit()
 
