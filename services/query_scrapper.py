@@ -18,80 +18,14 @@ def get_database_connection():
     return pymysql.connect(
         host='localhost',
         user='root',
-        password='root',
+        password='admin123',
         database='ecommerce',
         cursorclass=pymysql.cursors.DictCursor
     )
 
-def get_lowest_price(html_content, email, product_id, product_url, image_url):
-    data = []
-    soup = BeautifulSoup(html_content, "html.parser")
-    buying_options_div = soup.find("div", class_="sh-pov__grid")
-    product_description = ""
-    title = ""
-    lowest_price = None
-    lowest_price_seller = None
-    lowest_price_seller_url = None
-    if buying_options_div:
-        for row in buying_options_div.find_all("tr", class_="sh-osd__offer-row"):
-            seller_name = row.find("td", class_="SH30Lb").text.strip().replace('Opens in a new window', '') 
-            item_price = row.find("span", class_="g9WBQb").text.strip().replace('\u20b9', '')  # Remove currency symbol
-            for anchor_tag in row.find_all("a", href=True):
-                href = anchor_tag["href"]
-                href1 = urllib.parse.unquote(href.replace("/url?q=", "").replace("\\x3d", "=").replace("\\x26", "&"))
-                data.append({
-                    "Seller": seller_name,
-                    "Item Price": item_price,
-                    "Href": href1
-                })
-    else:
-        print("Buying options div not found in the HTML content.")
 
-    if data:
-        # Find the seller with the lowest price
-        lowest_price = float('inf')  # Set to positive infinity initially
-        for item in data:
-            item_price = float(item['Item Price'].replace(",", ""))
-            if item_price < lowest_price:
-                lowest_price = item_price
-                lowest_price_seller = item['Seller']
-                lowest_price_seller_url = item["Href"]
 
-    # Get product description and title
-    description_tag = soup.find('span', class_='BvQan')
-    if description_tag:
-        title = description_tag.text.strip()
 
-    description_tags = soup.find_all('li', class_='KgL16d')
-    if description_tags:
-        product_description = "\n".join([tag.span.text.strip() for tag in description_tags])
-    else:
-        description_tag = soup.find('span', class_='sh-ds__trunc-txt')
-        if description_tag:
-            product_description = description_tag.text.strip()
-
-    return {
-        "email": email,
-        "product_id": product_id,
-        "product_url": product_url,
-        "image_url": image_url,
-        "product_description": product_description,
-        "title": title,
-        "lowest_price": lowest_price,
-        "lowest_price_seller": lowest_price_seller,
-        "lowest_price_seller_url": lowest_price_seller_url
-    }
-
-# Function to fetch HTML content from a given URL
-def google_search_mozilla(url):
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.81 Safari/537.36"
-    }
-    response = requests.get(url, headers=headers)
-    if response.status_code == 200:
-        return response.text
-    else:
-        return None
 
 def insert_tracker_data(conn):
     cursor = conn.cursor()
@@ -321,6 +255,7 @@ import threading
 import time
 
 def get_lowest_price(html_content, email, product_id, product_url, image_url):
+    
     data = []
     soup = BeautifulSoup(html_content, "html.parser")
     buying_options_div = soup.find("div", class_="sh-pov__grid")
@@ -347,12 +282,16 @@ def get_lowest_price(html_content, email, product_id, product_url, image_url):
     if data:
         # Find the seller with the lowest price
         lowest_price = float('inf')  # Set to positive infinity initially
-        for item in data:
-            item_price = float(item['Item Price'].replace(",", ""))
-            if item_price < lowest_price:
-                lowest_price = item_price
-                lowest_price_seller = item['Seller']
-                lowest_price_seller_url = item["Href"]
+        try:
+            for item in data:
+                # print(item['Item Price'].replace(",", ""))
+                item_price = float(item['Item Price'].replace(",", ""))
+                if item_price < lowest_price:
+                    lowest_price = item_price
+                    lowest_price_seller = item['Seller']
+                    lowest_price_seller_url = item["Href"]
+        except Exception as e:
+            print("")
 
     # Get product description and title
     description_tag = soup.find('span', class_='BvQan')

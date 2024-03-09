@@ -57,7 +57,7 @@ def decode_jwt_token(token: str):
 conn = pymysql.connect(
     host='localhost',
     user='root',
-    password='root',
+    password='admin123',
     database='ecommerce',
     cursorclass=pymysql.cursors.DictCursor
 )
