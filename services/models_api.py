@@ -23,4 +23,5 @@ class CartItem(BaseModel):
     product_description: str
     price: str
     product_title: str
+    google_product_url: str
     

@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import pymysql
-from services.query_scrapper import google_search,html_parser,comparer,google_search_morzilla,extract_reviews_from_url,get_database_connection,insert_tracker_data
+from services.query_scrapper import google_search,html_parser,comparer,google_search_morzilla,extract_reviews_from_url,run_insert_tracker_data
 from services.models_api import UserCreate,Login,CartItem
 from datetime  import datetime,timedelta
 import jwt
@@ -12,19 +12,6 @@ import time
 # Your JWT secret key
 SECRET_KEY = "your_secret_key"
 ALGORITHM = "HS256"
-
-
-
-# Define a function to run the insert_tracker_data function in a separate thread
-def run_insert_tracker_data():
-    conn = get_database_connection()
-  
-    while True:
-        # Run the function to insert tracker data
-        insert_tracker_data(conn)
-        
-        # Sleep for 15 minutes
-        time.sleep(15*60)  # 15 minutes in seconds
 
 # Create and start a new thread to run the insert_tracker_data function
 insert_tracker_thread = threading.Thread(target=run_insert_tracker_data)
@@ -123,8 +110,8 @@ async def user_login(login: Login):
 @app.post("/insert_cart_item/")
 async def add_to_cart(item: CartItem):
     try:
-        query = "INSERT INTO cart (email, product_id, product_url, image_url, product_description, price, product_title) VALUES (%s, %s, %s, %s, %s, %s, %s)"
-        values = (item.email, item.product_id, item.product_url, item.image_url, item.product_description, item.price, item.product_title)
+        query = "INSERT INTO cart (email, product_id, product_url, image_url, product_description, price, product_title,google_product_url) VALUES (%s, %s, %s, %s, %s, %s, %s,%s)"
+        values = (item.email, item.product_id, item.product_url, item.image_url, item.product_description, item.price, item.product_title,item.google_product_url)
         cursor.execute(query, values)
         conn.commit()
         return {"message": "Item added to cart successfully"}
@@ -176,6 +163,32 @@ async def get_cart(email: str):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+
+# API endpoint to fetch tracker data
+@app.get("/tracker_data")
+async def get_tracker_data(product_id: str):
+    try:
+        # Create a cursor
+        cursor = conn.cursor()
+
+        # Execute SQL query to retrieve tracker data for the given product ID
+        sql = "SELECT price, timestamp FROM tracker WHERE product_id = %s"
+        cursor.execute(sql, (product_id,))
+        tracker_data = cursor.fetchall()
+
+        # Close cursor
+        cursor.close()
+
+        # Check if tracker data is empty
+        if not tracker_data:
+            raise HTTPException(status_code=404, detail="Tracker data not found")
+
+        return tracker_data
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
     
 # Define a route to extract reviews from a URL
 @app.post("/extract_reviews/")
