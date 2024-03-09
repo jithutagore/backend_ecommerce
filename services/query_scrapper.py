@@ -91,6 +91,44 @@ def google_search_mozilla_tracker(url):
         return response.text
     else:
         return None
+    
+
+def insert_waranty_data(conn, product_id):
+    cursor = conn.cursor()
+    sql = "SELECT * FROM cart WHERE product_id = %s"
+    cursor.execute(sql, (product_id,))
+    cart_data = cursor.fetchone()
+    if cart_data is not None:
+        product_url = cart_data["google_product_url"]
+        email = cart_data["email"]
+        product_id = cart_data["product_id"]
+        image_url = cart_data["image_url"]
+
+        # Fetch HTML content from the product URL
+        html_content = google_search_mozilla_tracker(product_url)
+        # print(html_content,".is it getting data")
+
+        # Get lowest price data
+        lowest_price_data = get_lowest_price_tracker(html_content, email, product_id, product_url, image_url)
+
+        # Insert data into the tracker table
+        insert_sql = """
+            INSERT INTO warranty (email, product_id, product_url, image_url, product_description, title, price, seller, seller_url)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """
+        
+        cursor.execute(insert_sql, (
+            lowest_price_data["email"],
+            lowest_price_data["product_id"],
+            lowest_price_data["product_url"],
+            lowest_price_data["image_url"],
+            lowest_price_data["product_description"],
+            lowest_price_data["title"],
+            lowest_price_data["lowest_price"],
+            lowest_price_data["lowest_price_seller"],
+            lowest_price_data["lowest_price_seller_url"]
+        ))
+        conn.commit()
 
 def insert_tracker_data(conn):
     cursor = conn.cursor()

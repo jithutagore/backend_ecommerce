@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import pymysql
-from services.query_scrapper import google_search,html_parser,comparer,google_search_morzilla,extract_reviews_from_url,run_insert_tracker_data
+from services.query_scrapper import google_search,html_parser,comparer,google_search_morzilla,extract_reviews_from_url,run_insert_tracker_data,insert_waranty_data
 from services.models_api import UserCreate,Login,CartItem
 from datetime  import datetime,timedelta
 import jwt
@@ -223,7 +223,87 @@ async def get_lowest_price(product_id: str):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+# FastAPI endpoint to execute the insert_waranty_data function
+@app.post("/insert_warranty/{product_id}")
+async def execute_insert_warranty(product_id: str):
+    try:
+        insert_waranty_data(conn, product_id)
+        return {"message": "Warranty data inserted successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+# Function to fetch warranty data from the database
+def fetch_warranty_data(conn):
+    cursor = conn.cursor()
+    sql = "SELECT * FROM warranty"
+    cursor.execute(sql)
+    warranty_data = cursor.fetchall()
+    cursor.close()
+    return warranty_data
 
+# Function to calculate days left for warranty
+def calculate_days_left(timestamp):
+    days_after_bought = (datetime.now() - timestamp).days
+    days_left_for_warranty = 365 - days_after_bought
+    return days_left_for_warranty
+
+# FastAPI endpoint to fetch warranty data with expiry time calculation
+@app.get("/warranty_data_with_expiry")
+async def get_warranty_data_with_expiry():
+    try:
+        # Fetch warranty data from the database
+        warranty_data = fetch_warranty_data(conn)
+
+        # Calculate expiry time for each warranty
+        for warranty in warranty_data:
+            timestamp = warranty["timestamp"]
+            days_left_for_warranty = calculate_days_left(timestamp)
+            warranty["expiry_time"] = str(days_left_for_warranty) + " days left"
+
+        return warranty_data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@app.get("/search_with_filters/")
+async def search_with_filters(query: str, minPrice: float = None, maxPrice: float = None):
+    try:
+        html_content = google_search(query)
+        results = html_parser(html_content)
+        
+        # Filter results based on price range if minPrice and/or maxPrice are provided
+        if minPrice is not None:
+            results = [r for r in results if float(r["original_price"].replace("₹", "").replace(",", "")) >= minPrice]
+        if maxPrice is not None:
+            results = [r for r in results if float(r["original_price"].replace("₹", "").replace(",", "")) <= maxPrice]
+        
+        return {"results": results}
+    except HTTPException as e:
+        return {"error": str(e.detail)}
+    except ConnectionResetError as e:
+        return {"error": "Connection reset by peer"}  # Handle connection reset error gracefully
+    
+@app.delete("/warranty_data/{product_id}")
+async def delete_warranty_data(product_id: str):
+    try:
+        # Create a cursor
+        cursor = conn.cursor()
+
+        # Execute SQL query to delete warranty data for the given product_id
+        sql = "DELETE FROM warranty WHERE product_id = %s"
+        cursor.execute(sql, (product_id,))
+        conn.commit()
+
+        # Check if any rows were affected
+        if cursor.rowcount == 0:
+            raise HTTPException(status_code=404, detail=f"No warranty data found for product ID {product_id}")
+
+        # Close cursor
+        cursor.close()
+
+        return {"message": f"Warranty data for product ID {product_id} deleted successfully"}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 # Run the application with uvicorn
 if __name__ == "__main__":
