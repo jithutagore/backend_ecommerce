@@ -357,8 +357,12 @@ async def get_answer(maiid: str, question: str):
     
     result = llm.invoke(prompt).content
     query=result.replace("```sql", "").replace("```", "")
+    print(query)
     data_db=run_query(query=query)
-    output=f"generate a new  response  with the data that contains my query and response,where  my query is : {query} and my response is {data_db}"
+    db_response=str(data_db)
+    print(data_db)
+    output=f"Craft a fresh response based on my question and answer. My query is: {question}, and the provided answer is {db_response}"
+    print(output)
     final_output=llm.invoke(output).content
     response=str(final_output)
     unwanted="""**Query:**\n\n```sql```\n\n**Response:**\n\n```\n\n```\n\n"""
