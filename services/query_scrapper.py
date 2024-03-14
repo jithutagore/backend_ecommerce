@@ -348,7 +348,8 @@ def comparer(html_content,url):
 
         title = soup.find('span', class_='BvQan').text.strip()
     except Exception as e:
-        print(E)
+        print(e)
+        title=""
 
     if buying_options_div:
         for row in buying_options_div.find_all("tr", class_="sh-osd__offer-row"):

@@ -12,7 +12,7 @@ import time
 from langchain.utilities import SQLDatabase
 from langchain_experimental.sql import SQLDatabaseChain
 from langchain_google_genai import ChatGoogleGenerativeAI
-llm = ChatGoogleGenerativeAI(model="gemini-pro",google_api_key="AIzaSyA4wdPBdAqI6P0N4b6LOx44PtFCp3mXGlI")
+llm = ChatGoogleGenerativeAI(model="gemini-pro",google_api_key="")
 db_user = "root"
 db_password = "admin123"
 db_host = "localhost"
